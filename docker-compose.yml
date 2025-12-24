@@ -1,14 +1,23 @@
 services:
+
+  # ======================
+  # ZOOKEEPER
+  # ======================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
 
+  # ======================
+  # KAFKA
+  # ======================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
     depends_on:
       - zookeeper
     ports:
@@ -16,19 +25,39 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+
+      # Externe (Python local)
+      # Interne (Spark / Connect)
+      KAFKA_ADVERTISED_LISTENERS: >
+        PLAINTEXT://localhost:9092,
+        PLAINTEXT_INTERNAL://kafka:29092
+
+      KAFKA_LISTENERS: >
+        PLAINTEXT://0.0.0.0:9092,
+        PLAINTEXT_INTERNAL://0.0.0.0:29092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >
+        PLAINTEXT:PLAINTEXT,
+        PLAINTEXT_INTERNAL:PLAINTEXT
+
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
+  # ======================
+  # MONGODB
+  # ======================
   mongo:
     image: mongo:6
+    container_name: mongo
     ports:
       - "27017:27017"
 
+  # ======================
+  # KAFKA CONNECT
+  # ======================
   connect:
     image: confluentinc/cp-kafka-connect:7.5.0
+    container_name: kafka-connect
     depends_on:
       - kafka
       - mongo
@@ -38,16 +67,20 @@ services:
       CONNECT_BOOTSTRAP_SERVERS: "kafka:29092"
       CONNECT_REST_PORT: 8083
       CONNECT_GROUP_ID: "connect-cluster"
+
       CONNECT_CONFIG_STORAGE_TOPIC: "_connect-configs"
       CONNECT_OFFSET_STORAGE_TOPIC: "_connect-offsets"
       CONNECT_STATUS_STORAGE_TOPIC: "_connect-status"
+
       CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+
       CONNECT_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
       CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE: "false"
       CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+
       CONNECT_PLUGIN_PATH: "/usr/share/java,/usr/share/confluent-hub-components"
     command:
       - bash
@@ -55,3 +88,31 @@ services:
       - |
         confluent-hub install --no-prompt mongodb/kafka-connect-mongodb:1.11.2
         /etc/confluent/docker/run
+
+  # ======================
+  # SPARK MASTER (PORT FIX)
+  # ======================
+  spark-master:
+    image: apache/spark:3.4.2
+    container_name: spark-master
+    command: >
+      bash -c "/opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master"
+    ports:
+      - "8081:8080"   # ⚠️ UI Spark déplacée
+      - "7077:7077"
+    volumes:
+      - ./spark:/opt/spark-app
+
+  # ======================
+  # SPARK WORKER
+  # ======================
+  spark-worker:
+    image: apache/spark:3.4.2
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    command: >
+      bash -c "/opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077"

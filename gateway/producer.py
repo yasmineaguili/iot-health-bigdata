@@ -14,7 +14,7 @@ producer = KafkaProducer(
 )
 
 
-df = pd.read_csv(iot_measurements.csv)
+df = pd.read_csv(CSV_FILE)
 
 def is_emergency(metric, value):
     try:
