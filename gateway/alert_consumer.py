@@ -1,9 +1,7 @@
 import json
 from kafka import KafkaConsumer
 
-# ---------------------------------
-# Configuration du consumer Kafka
-# ---------------------------------
+
 TOPIC_NAME = "fire"
 BOOTSTRAP_SERVERS = "localhost:9092"
 
@@ -18,9 +16,7 @@ consumer = KafkaConsumer(
 print("\n🚨 Alert Consumer démarré")
 print("⏳ En attente d'événements critiques...\n")
 
-# ---------------------------------
-# Boucle d'écoute continue
-# ---------------------------------
+
 for message in consumer:
     alert = message.value
 

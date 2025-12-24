@@ -3,28 +3,19 @@ import time
 import pandas as pd
 from kafka import KafkaProducer
 
-# -----------------------
-# Configuration
-# -----------------------
-CSV_FILE = "iot_measurements.csv"   # adapte au nom exact si besoin
+
+CSV_FILE = "iot_measurements.csv"   
 BOOTSTRAP_SERVERS = "localhost:9092"
 
-# -----------------------
-# Kafka Producer
-# -----------------------
+
 producer = KafkaProducer(
     bootstrap_servers=BOOTSTRAP_SERVERS,
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
-# -----------------------
-# Charger le dataset
-# -----------------------
+
 df = pd.read_csv(iot_measurements.csv)
 
-# -----------------------
-# Règles simples d'urgence
-# -----------------------
 def is_emergency(metric, value):
     try:
         value = float(value)
@@ -58,7 +49,7 @@ for _, row in df.iterrows():
     producer.send(topic, event)
     print(f"[{topic.upper()}] {event}")
 
-    time.sleep(0.2)   # simulation temps réel
+    time.sleep(0.2)  
 
 producer.flush()
 print("Streaming terminé.")
