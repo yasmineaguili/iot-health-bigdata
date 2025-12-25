@@ -1,8 +1,7 @@
 services:
 
-  # ======================
+  
   # ZOOKEEPER
-  # ======================
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: zookeeper
@@ -12,9 +11,7 @@ services:
     ports:
       - "2181:2181"
 
-  # ======================
   # KAFKA
-  # ======================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     container_name: kafka
@@ -43,18 +40,14 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-  # ======================
   # MONGODB
-  # ======================
   mongo:
     image: mongo:6
     container_name: mongo
     ports:
       - "27017:27017"
 
-  # ======================
   # KAFKA CONNECT
-  # ======================
   connect:
     image: confluentinc/cp-kafka-connect:7.5.0
     container_name: kafka-connect
@@ -89,9 +82,7 @@ services:
         confluent-hub install --no-prompt mongodb/kafka-connect-mongodb:1.11.2
         /etc/confluent/docker/run
 
-  # ======================
-  # SPARK MASTER (PORT FIX)
-  # ======================
+  # SPARK MASTER 
   spark-master:
     image: apache/spark:3.4.2
     container_name: spark-master
@@ -104,9 +95,7 @@ services:
     volumes:
       - ./spark:/opt/spark-app
 
-  # ======================
   # SPARK WORKER
-  # ======================
   spark-worker:
     image: apache/spark:3.4.2
     container_name: spark-worker

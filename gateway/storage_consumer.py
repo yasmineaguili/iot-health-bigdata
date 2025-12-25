@@ -2,9 +2,7 @@ import json
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 
-# =======================
-# Kafka Consumers
-# =======================
+
 
 consumer_normal = KafkaConsumer(
     "normal",
@@ -22,26 +20,21 @@ consumer_fire = KafkaConsumer(
     value_deserializer=lambda v: json.loads(v.decode("utf-8"))
 )
 
-# =======================
-# MongoDB
-# =======================
+
 
 client = MongoClient("mongodb://localhost:27017/")
 db = client["iot_health"]
 
-measurements_col = db["measurements"]   # données normales
-alerts_col = db["alerts"]               # alertes critiques
+measurements_col = db["measurements"]  
+alerts_col = db["alerts"]               
 
 print("📦 Storage consumer démarré")
 print("⏳ En attente de données (normal + fire)...\n")
 
-# =======================
-# Boucle principale
-# =======================
+
 
 while True:
 
-    # -------- NORMAL DATA --------
     for records in consumer_normal.poll(timeout_ms=1000).values():
         for record in records:
             data = record.value
@@ -56,9 +49,8 @@ while True:
                     f"Value={data.get('value')}"
                 )
             except Exception as e:
-                print("❌ Erreur insertion Mongo (NORMAL):", e)
+                print(" Erreur insertion Mongo (NORMAL):", e)
 
-    # -------- ALERT DATA --------
     for records in consumer_fire.poll(timeout_ms=1000).values():
         for record in records:
             data = record.value
@@ -73,4 +65,4 @@ while True:
                     f"Value={data.get('value')}"
                 )
             except Exception as e:
-                print("❌ Erreur insertion Mongo (ALERT):", e)
+                print(" Erreur insertion Mongo (ALERT):", e)

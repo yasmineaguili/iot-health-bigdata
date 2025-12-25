@@ -20,7 +20,7 @@ print("⏳ En attente d'événements critiques...\n")
 for message in consumer:
     alert = message.value
 
-    print("🚨🚨🚨 ALERTE CRITIQUE DÉTECTÉE 🚨🚨🚨")
+    print(" ALERTE CRITIQUE DÉTECTÉE ")
     print(f"Patient ID  : {alert['patient_id']}")
     print(f"Device ID   : {alert['device_id']}")
     print(f"Métrique    : {alert['metric']}")
