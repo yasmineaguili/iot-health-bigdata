@@ -2,13 +2,14 @@ import json
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 
-# -----------------------
+# =======================
 # Kafka Consumers
-# -----------------------
+# =======================
+
 consumer_normal = KafkaConsumer(
     "normal",
     bootstrap_servers="localhost:9092",
-    auto_offset_reset="earliest",
+    auto_offset_reset="latest",
     enable_auto_commit=True,
     value_deserializer=lambda v: json.loads(v.decode("utf-8"))
 )
@@ -16,14 +17,15 @@ consumer_normal = KafkaConsumer(
 consumer_fire = KafkaConsumer(
     "fire",
     bootstrap_servers="localhost:9092",
-    auto_offset_reset="earliest",
+    auto_offset_reset="latest",
     enable_auto_commit=True,
     value_deserializer=lambda v: json.loads(v.decode("utf-8"))
 )
 
-# -----------------------
+# =======================
 # MongoDB
-# -----------------------
+# =======================
+
 client = MongoClient("mongodb://localhost:27017/")
 db = client["iot_health"]
 
@@ -33,23 +35,42 @@ alerts_col = db["alerts"]               # alertes critiques
 print("📦 Storage consumer démarré")
 print("⏳ En attente de données (normal + fire)...\n")
 
-# -----------------------
-# Boucle de stockage
-# -----------------------
+# =======================
+# Boucle principale
+# =======================
+
 while True:
 
-    # NORMAL
+    # -------- NORMAL DATA --------
     for records in consumer_normal.poll(timeout_ms=1000).values():
         for record in records:
             data = record.value
             data["status"] = "normal"
-            measurements_col.insert_one(data)
-            print(f"✔ NORMAL stocké | Patient {data['patient_id']} | {data['metric']}")
 
-    # FIRE
+            try:
+                measurements_col.insert_one(data)
+                print(
+                    f"✔ NORMAL stocké | "
+                    f"Patient {data.get('patient_id')} | "
+                    f"{data.get('metric')} | "
+                    f"Value={data.get('value')}"
+                )
+            except Exception as e:
+                print("❌ Erreur insertion Mongo (NORMAL):", e)
+
+    # -------- ALERT DATA --------
     for records in consumer_fire.poll(timeout_ms=1000).values():
         for record in records:
             data = record.value
             data["status"] = "fire"
-            alerts_col.insert_one(data)
-            print(f"🚨 ALERT stockée | Patient {data['patient_id']} | {data['metric']}")
+
+            try:
+                alerts_col.insert_one(data)
+                print(
+                    f"🚨 ALERT stockée | "
+                    f"Patient {data.get('patient_id')} | "
+                    f"{data.get('metric')} | "
+                    f"Value={data.get('value')}"
+                )
+            except Exception as e:
+                print("❌ Erreur insertion Mongo (ALERT):", e)

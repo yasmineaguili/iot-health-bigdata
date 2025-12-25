@@ -22,16 +22,17 @@ def is_emergency(metric, value):
     except:
         return False
 
-    if metric == "HeartRate" and (value < 40 or value > 130):
+    if metric == "HeartRate" and (value < 50 or value > 110):
         return True
-    if metric == "OxygenLevel" and value < 92:
+    if metric == "OxygenLevel" and value < 94:
         return True
-    if metric in ["SystolicBP", "DiastolicBP"] and value > 140:
+    if metric in ["SystolicBP", "DiastolicBP"] and value > 135:
         return True
-    if metric == "BodyTemperature" and (value < 35 or value > 39):
+    if metric == "BodyTemperature" and (value < 36 or value > 38):
         return True
 
     return False
+
 
 for _, row in df.iterrows():
 
